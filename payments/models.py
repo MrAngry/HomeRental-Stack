@@ -10,7 +10,7 @@ class Contract(Model):
         return sum(payment.value for payment in self.items.all())
 
 
-class Payment(Model):
+class PaymentItem(Model):
     description = CharField(max_length=200, blank=True)
     value = DecimalField(max_digits=8,decimal_places=2, null=False)
     createdAt = DateTimeField(auto_now_add=True)
