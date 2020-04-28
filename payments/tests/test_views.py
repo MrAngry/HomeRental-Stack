@@ -6,6 +6,16 @@ from payments.models import Contract, PaymentItem
 from payments.serializers import PaymentItemSerializer, ContractSerializer
 
 
+class TwoContractsMixin:
+    def setUp(self):
+        super().setUp()
+        self.contract_1 = Contract.objects.create()
+        list(PaymentItem.objects.create(value=x, contract=self.contract_1) for x in (100, 200, 300))
+
+        self.contract_2 = Contract.objects.create()
+        list(PaymentItem.objects.create(value=x, contract=self.contract_2) for x in (101, 202, 303))
+
+
 class TestPaymentItemsView(TestCase):
 
     def test_get_payment_items_collection(self):
@@ -19,35 +29,18 @@ class TestPaymentItemsView(TestCase):
         self.assertSequenceEqual(response.json(), PaymentItemSerializer(instance=payment_items, many=True).data)
 
 
-class TestContractsView(TestCase):
+class TestContractsView(TwoContractsMixin,TestCase):
     def test_get(self):
-        contract_1 = Contract.objects.create()
-        payment_items = list(PaymentItem.objects.create(value=x, contract=contract_1) for x in (100, 200, 300))
-
-        contract_2 = Contract.objects.create()
-        payment_items = list(PaymentItem.objects.create(value=x, contract=contract_1) for x in (100, 200, 300))
-
         client = Client()
         response = client.get('/payments/contracts/')
         self.assertEquals(200, response.status_code)
 
-        self.assertSequenceEqual(response.json(), ContractSerializer(instance=[contract_1, contract_2], many=True).data)
+        self.assertSequenceEqual(response.json(), ContractSerializer(instance=[self.contract_1, self.contract_2], many=True).data)
 
 
-class TestSingleContractView(TestCase):
+class TestSingleContractView(TwoContractsMixin,TestCase):
     def test_get(self):
-        contract_1 = Contract.objects.create()
-        payment_items = list(PaymentItem.objects.create(value=x, contract=contract_1) for x in (100, 200, 300))
-
-        contract_2 = Contract.objects.create()
-        payment_items = list(PaymentItem.objects.create(value=x, contract=contract_1) for x in (101, 202, 303))
-
         client = Client()
-        response = client.get(f'/payments/contracts/{contract_2.id}/')
+        response = client.get(f'/payments/contracts/{self.contract_2.id}/')
 
-        self.assertDictEqual(response.json(),ContractSerializer(instance=contract_2).data)
-
-
-
-
-
+        self.assertDictEqual(response.json(), ContractSerializer(instance=self.contract_2).data)
