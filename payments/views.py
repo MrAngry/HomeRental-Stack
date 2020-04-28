@@ -34,3 +34,20 @@ class ContractPaymentItemsView(APIView):
         payment_serializer.save()
         return Response(status=201)
 
+
+class ContractSinglePaymentItemView(APIView):
+    parser_classes = (JSONParser,)
+
+    def patch(self, request, contract_id, payment_item_id):
+        payload = request.data.copy()
+        payload['contractId'] = contract_id  # Set/overwrite passed contractID in the body with one from URL
+        payload['id'] = payment_item_id  # Set/overwrite passed `PaymentItem` id in the body with one from URL
+
+        payment_serializer = PaymentItemSerializer(
+            instance=PaymentItem.objects.get(pk=payload['id'], contract_id=payload['contractId']),
+            data=payload,
+            partial=True)
+
+        payment_serializer.is_valid(raise_exception=True)
+        payment_serializer.save()
+        return Response(status=202)
