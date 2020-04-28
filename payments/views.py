@@ -14,3 +14,8 @@ class PaymentItemsView(APIView):
 class ContractsView(APIView):
     def get(self, request):
         return Response(ContractSerializer(Contract.objects.all(), many=True).data, status=200)
+
+
+class SingleContractView(APIView):
+    def get(self, request, id):
+        return Response(ContractSerializer(Contract.objects.get(pk=id), many=False).data, status=200)

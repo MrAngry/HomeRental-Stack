@@ -7,6 +7,7 @@ from payments.serializers import PaymentItemSerializer, ContractSerializer
 
 
 class TestPaymentItemsView(TestCase):
+
     def test_get_payment_items_collection(self):
         contract = Contract.objects.create()
         payment_items = list(PaymentItem.objects.create(value=x, contract=contract) for x in (100, 200, 300))
@@ -30,7 +31,22 @@ class TestContractsView(TestCase):
         response = client.get('/payments/contracts/')
         self.assertEquals(200, response.status_code)
 
-        self.assertSequenceEqual(response.json(), ContractSerializer(instance=[contract_1,contract_2],many=True).data)
+        self.assertSequenceEqual(response.json(), ContractSerializer(instance=[contract_1, contract_2], many=True).data)
+
+
+class TestSingleContractView(TestCase):
+    def test_get(self):
+        contract_1 = Contract.objects.create()
+        payment_items = list(PaymentItem.objects.create(value=x, contract=contract_1) for x in (100, 200, 300))
+
+        contract_2 = Contract.objects.create()
+        payment_items = list(PaymentItem.objects.create(value=x, contract=contract_1) for x in (101, 202, 303))
+
+        client = Client()
+        response = client.get(f'/payments/contracts/{contract_2.id}/')
+
+        self.assertDictEqual(response.json(),ContractSerializer(instance=contract_2).data)
+
 
 
 
