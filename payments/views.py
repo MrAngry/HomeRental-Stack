@@ -51,3 +51,11 @@ class ContractSinglePaymentItemView(APIView):
         payment_serializer.is_valid(raise_exception=True)
         payment_serializer.save()
         return Response(status=202)
+
+    def delete(self, request, contract_id, payment_item_id):
+        try:
+            payment_item = PaymentItem.objects.get(pk=payment_item_id,contract_id=contract_id)
+            payment_item.delete()
+            return Response(status=204)
+        except PaymentItem.DoesNotExist:
+            return Response(status=404)

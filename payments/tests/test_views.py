@@ -69,7 +69,7 @@ class TestContractPaymentItemsView(TwoContractsMixin, TestCase):
         payment_item_id = first_payment_item.id
         payment_item_json = {'value': '120.23', 'description': 'TEST_DESCRIPTION', 'contractId': self.contract_1.id,
                              'id': payment_item_id}
-        response = client.patch(f'/payments/contracts/{self.contract_1.id}/payment_items/{payment_item_id}',
+        response = client.patch(f'/payments/contracts/{self.contract_1.id}/payment_items/{payment_item_id}/',
                                 data=payment_item_json,
                                 content_type='application/json')
 
@@ -77,3 +77,21 @@ class TestContractPaymentItemsView(TwoContractsMixin, TestCase):
         first_payment_item = self.contract_1.items.first()
         self.assertEquals(first_payment_item.value, Decimal(payment_item_json['value']))
         self.assertEquals(first_payment_item.description, payment_item_json['description'])
+
+    def test_delete(self):
+        client = Client()
+        first_payment_item = self.contract_1.items.first()
+        self.assertIn(first_payment_item, self.contract_1.items.all())
+
+        response = client.delete(f'/payments/contracts/{self.contract_1.id}/payment_items/{first_payment_item.id}/')
+        self.assertEquals(response.status_code,204)
+
+        # Check if any `PaymentItem` returned in `response` has a subset of fields provided to POST method
+        self.contract_1.refresh_from_db()
+        self.assertNotIn(first_payment_item,self.contract_1.items.all())
+
+    def test_delete_404(self):
+        client = Client()
+        non_existent_id = PaymentItem.objects.last().pk + 1
+        response = client.delete(f'/payments/contracts/{self.contract_1.id}/payment_items/{non_existent_id}/')
+        self.assertEquals(response.status_code,404)
