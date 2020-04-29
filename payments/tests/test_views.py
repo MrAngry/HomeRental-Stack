@@ -63,6 +63,9 @@ class TestContractPaymentItemsView(TwoContractsMixin, TestCase):
         items_ = [set(payment_item_json.items()).issubset(set(p.items())) for p in payment_items]
         self.assertTrue(any(items_))
 
+
+class TestContractSinglePaymentItemView(TwoContractsMixin, TestCase):
+
     def test_patch(self):
         client = Client()
         first_payment_item = self.contract_1.items.first()
@@ -84,14 +87,14 @@ class TestContractPaymentItemsView(TwoContractsMixin, TestCase):
         self.assertIn(first_payment_item, self.contract_1.items.all())
 
         response = client.delete(f'/payments/contracts/{self.contract_1.id}/payment_items/{first_payment_item.id}/')
-        self.assertEquals(response.status_code,204)
+        self.assertEquals(response.status_code, 204)
 
         # Check if any `PaymentItem` returned in `response` has a subset of fields provided to POST method
         self.contract_1.refresh_from_db()
-        self.assertNotIn(first_payment_item,self.contract_1.items.all())
+        self.assertNotIn(first_payment_item, self.contract_1.items.all())
 
     def test_delete_404(self):
         client = Client()
         non_existent_id = PaymentItem.objects.last().pk + 1
         response = client.delete(f'/payments/contracts/{self.contract_1.id}/payment_items/{non_existent_id}/')
-        self.assertEquals(response.status_code,404)
+        self.assertEquals(response.status_code, 404)
