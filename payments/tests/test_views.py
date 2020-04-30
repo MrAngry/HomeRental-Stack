@@ -1,8 +1,11 @@
+from datetime import datetime, timedelta, date
 from decimal import Decimal
 from unittest import TestCase
 
+import pytz
 from django.test import Client, TestCase
 
+from HomeRental_Stack import settings
 from payments.models import Contract, PaymentItem
 from payments.serializers import PaymentItemSerializer, ContractSerializer
 
@@ -62,6 +65,54 @@ class TestContractPaymentItemsView(TwoContractsMixin, TestCase):
         # Check if any `PaymentItem` returned in `response` has a subset of fields provided to POST method
         items_ = [set(payment_item_json.items()).issubset(set(p.items())) for p in payment_items]
         self.assertTrue(any(items_))
+
+    def test_get_return_all_payment_items_for_contract(self):
+        client = Client()
+
+        response = client.get(f'/payments/contracts/{self.contract_1.id}/payment_items/')
+        self.assertSequenceEqual(PaymentItemSerializer(instance=self.contract_1.items.all(), many=True).data,
+                                 response.json())
+
+    def test_get_returns_payment_items_in_date_range(self):
+        client = Client()
+        contract = Contract.objects.create()
+        payment_items = []
+
+        test_dates = [datetime.now(tz=pytz.UTC) + timedelta(days=i) for i in range(-1, 2)]
+
+        # Create test payments for yesterday, today and tomorrow
+        for date in test_dates:
+            payment_item = PaymentItem.objects.create(description="TEST DESCRIPTION", value=Decimal(100.23),
+                                                      contract=contract)
+            payment_item.createdAt = date
+            payment_item.save(update_fields=['createdAt'])
+            payment_items.append(payment_item)
+
+        # Map datetime to string representation
+        test_dates = [datetime.strftime(date, settings.REST_FRAMEWORK['DATETIME_FORMAT']) for date in test_dates]
+
+        # Query for payments starting yesterday, today and tomorrow
+        for index, date in enumerate(test_dates):
+            response = client.get(f'/payments/contracts/{contract.id}/payment_items/',
+                                  data={'startDate': date})
+            expected = payment_items[index:]
+            self.assertSequenceEqual(PaymentItemSerializer(instance=expected, many=True).data,
+                                     response.json())
+
+        # Query for payments created until tomorrow, today, yesterday
+        for index, date in enumerate(test_dates):
+            response = client.get(f'/payments/contracts/{contract.id}/payment_items/',
+                                  data={'endDate': date})
+            expected = payment_items[:-2 + index] if index - 2 else payment_items[:]
+            self.assertSequenceEqual(PaymentItemSerializer(instance=expected, many=True).data,
+                                     response.json())
+
+        # Query for payments made today:
+        response = client.get(f'/payments/contracts/{contract.id}/payment_items/',
+                              data={'endDate': test_dates[1], 'startDate': test_dates[1]})
+        expected = payment_items[1:2]
+        self.assertSequenceEqual(PaymentItemSerializer(instance=expected, many=True).data,
+                                 response.json())
 
 
 class TestContractSinglePaymentItemView(TwoContractsMixin, TestCase):
