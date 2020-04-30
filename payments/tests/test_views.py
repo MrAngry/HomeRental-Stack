@@ -54,7 +54,8 @@ class TestSingleContractView(TwoContractsMixin, TestCase):
 class TestContractPaymentItemsView(TwoContractsMixin, TestCase):
     def test_post(self):
         client = Client()
-        payment_item_json = {'value': '120.23', 'description': 'TEST_DESCRIPTION', 'contractId': self.contract_1.id}
+        payment_item_json = {'value': '120.23', 'description': 'TEST_DESCRIPTION', 'contractId': self.contract_1.id,
+                             'isDeleted': True, 'isImported': True}
         response = client.post(f'/payments/contracts/{self.contract_1.id}/payment_items/', data=payment_item_json,
                                content_type='application/json')
         self.assertEquals(response.status_code, 201)
@@ -77,7 +78,7 @@ class TestContractPaymentItemsView(TwoContractsMixin, TestCase):
         client = Client()
 
         response = client.get(f'/payments/contracts/{self.contract_1.id}/payment_items/')
-        self.assertEqual(sum(payment.value for payment in self.contract_1.items.all()),response.json()['sum'])
+        self.assertEqual(sum(payment.value for payment in self.contract_1.items.all()), response.json()['sum'])
 
     def test_get_returns_payment_items_in_date_range(self):
         client = Client()

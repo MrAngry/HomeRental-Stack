@@ -1,7 +1,7 @@
 from django.db import models
 
 # Create your models here.
-from django.db.models import Model, CharField, DecimalField, DateTimeField, ForeignKey, DO_NOTHING
+from django.db.models import Model, CharField, DecimalField, DateTimeField, ForeignKey, DO_NOTHING, BooleanField
 
 
 class Contract(Model):
@@ -16,3 +16,5 @@ class PaymentItem(Model):
     createdAt = DateTimeField(auto_now_add=True)
     updatedAt = DateTimeField(auto_now_add=True)
     contract = ForeignKey(to=Contract, on_delete=DO_NOTHING, related_name='items')
+    isImported = BooleanField(default=False)
+    isDeleted = BooleanField(default=False)
