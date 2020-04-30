@@ -50,7 +50,10 @@ class ContractPaymentItemsView(APIView):
                                                              settings.REST_FRAMEWORK['DATETIME_FORMAT'])
                 payment_items = payment_items.filter(createdAt__lte=target_end_date)
 
-            return Response(status=200, data=PaymentItemSerializer(instance=payment_items, many=True).data)
+            payload = {}
+            payload['items'] = PaymentItemSerializer(instance=payment_items, many=True).data
+            payload['sum'] = sum(list(payment.value for payment in payment_items.all()))
+            return Response(status=200, data=payload)
         except Contract.DoesNotExist:
             return Response(status=404, data=f"No contract with ID:{contract_id}")
 

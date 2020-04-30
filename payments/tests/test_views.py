@@ -71,7 +71,13 @@ class TestContractPaymentItemsView(TwoContractsMixin, TestCase):
 
         response = client.get(f'/payments/contracts/{self.contract_1.id}/payment_items/')
         self.assertSequenceEqual(PaymentItemSerializer(instance=self.contract_1.items.all(), many=True).data,
-                                 response.json())
+                                 response.json()['items'])
+
+    def test_get_returns_sum_of_all_payment_Values(self):
+        client = Client()
+
+        response = client.get(f'/payments/contracts/{self.contract_1.id}/payment_items/')
+        self.assertEqual(sum(payment.value for payment in self.contract_1.items.all()),response.json()['sum'])
 
     def test_get_returns_payment_items_in_date_range(self):
         client = Client()
@@ -97,7 +103,7 @@ class TestContractPaymentItemsView(TwoContractsMixin, TestCase):
                                   data={'startDate': date})
             expected = payment_items[index:]
             self.assertSequenceEqual(PaymentItemSerializer(instance=expected, many=True).data,
-                                     response.json())
+                                     response.json()['items'])
 
         # Query for payments created until tomorrow, today, yesterday
         for index, date in enumerate(test_dates):
@@ -105,14 +111,14 @@ class TestContractPaymentItemsView(TwoContractsMixin, TestCase):
                                   data={'endDate': date})
             expected = payment_items[:-2 + index] if index - 2 else payment_items[:]
             self.assertSequenceEqual(PaymentItemSerializer(instance=expected, many=True).data,
-                                     response.json())
+                                     response.json()['items'])
 
         # Query for payments made today:
         response = client.get(f'/payments/contracts/{contract.id}/payment_items/',
                               data={'endDate': test_dates[1], 'startDate': test_dates[1]})
         expected = payment_items[1:2]
         self.assertSequenceEqual(PaymentItemSerializer(instance=expected, many=True).data,
-                                 response.json())
+                                 response.json()['items'])
 
 
 class TestContractSinglePaymentItemView(TwoContractsMixin, TestCase):
