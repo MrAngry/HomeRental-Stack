@@ -10,16 +10,17 @@ from payments.models import PaymentItem, Contract
 from payments.serializers import PaymentItemSerializer, ContractSerializer
 
 
+# Explicit parser_classes assigment should be used for code readability
 class PaymentItemsView(APIView):
     def get(self, request):
         return Response(PaymentItemSerializer(PaymentItem.objects.all(), many=True).data, status=200)
 
-
+# Explicit parser_classes assigment should be used for code readability
 class ContractsView(APIView):
     def get(self, request):
         return Response(ContractSerializer(Contract.objects.all(), many=True).data, status=200)
 
-
+# Explicit parser_classes assigment should be used for code readability
 class SingleContractView(APIView):
     def get(self, request, id):
         return Response(ContractSerializer(Contract.objects.get(pk=id), many=False).data, status=200)
@@ -37,6 +38,7 @@ class ContractPaymentItemsView(APIView):
         payment_serializer.save()
         return Response(status=201)
 
+    # Lack of proper Serializer error validation handling
     def get(self, request, contract_id):
         try:
             payment_items = Contract.objects.get(pk=contract_id).items.all()
@@ -61,6 +63,7 @@ class ContractPaymentItemsView(APIView):
 class ContractSinglePaymentItemView(APIView):
     parser_classes = (JSONParser,)
 
+    # Lack of 404 handling, lack of proper Serializer error validation handling
     def patch(self, request, contract_id, payment_item_id):
         payload = request.data.copy()
         payload['contractId'] = contract_id  # Set/overwrite passed contractID in the body with one from URL

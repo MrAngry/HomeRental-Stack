@@ -9,7 +9,7 @@ from HomeRental_Stack import settings
 from payments.models import Contract, PaymentItem
 from payments.serializers import PaymentItemSerializer, ContractSerializer
 
-
+# Some of the test method names are not conveying enough information on what is exactly tested
 class TwoContractsMixin:
     def setUp(self):
         super().setUp()
@@ -80,7 +80,7 @@ class TestContractPaymentItemsView(TwoContractsMixin, TestCase):
         response = client.get(f'/payments/contracts/{self.contract_1.id}/payment_items/')
         self.assertEqual(sum(payment.value for payment in self.contract_1.items.all()), response.json()['sum'])
 
-    def test_get_returns_payment_items_in_date_range(self):
+    def test_get_returns_payment_items_in_date_range(self):  # This test should be broken up in to 3 smaller ones
         client = Client()
         contract = Contract.objects.create()
         payment_items = []
@@ -122,6 +122,7 @@ class TestContractPaymentItemsView(TwoContractsMixin, TestCase):
                                  response.json()['items'])
 
 
+# Some of the test method names are not conveying enough information on what is exactly tested
 class TestContractSinglePaymentItemView(TwoContractsMixin, TestCase):
 
     def test_patch(self):
